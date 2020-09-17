@@ -12,7 +12,7 @@ WriteMakefile(
     @makefileopts,
 
     ABSTRACT     => 'The RFC 2045 encodings; base64 and quoted-printable',
-    AUTHOR       => 'Gisle Aas <gisle@activestate.com>',
+    AUTHOR       => 'Gisle Aas <gaas@cpan.org>',
     LICENSE      => 'perl',
     MIN_PERL_VERSION => 5.004,
     PREREQ_PM    => {
@@ -20,7 +20,7 @@ WriteMakefile(
     },
     META_MERGE   => {
         resources  => {
-            repository => 'https://github.com/gisle/mime-base64',
+            repository => 'https://github.com/Dual-Life/mime-base64',
         }
     },
 );
