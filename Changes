@@ -1,6 +1,13 @@
 Change history for MIME-Base64
 
 {{$NEXT}}
+  - Convert the build to Dist::Zilla to ensure we're releasing well built
+    packages
+  - Ensure all tests are using strict and warnings (thanks, Nicolas R).
+  - Cleanup this change log
+  - Add a .mailmap to cleanup our contributors list
+  - Use `our` instead of `use vars`
+  - Bump the required Perl version to v5.6.2
 
 3.15      2015-01-12
   - Avoid compilation warnings on Windows.
