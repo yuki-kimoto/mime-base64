@@ -1,6 +1,7 @@
 package MIME::QuotedPrint;
 
 use strict;
+use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);

@@ -1,6 +1,7 @@
 package MIME::Base64;
 
 use strict;
+use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);

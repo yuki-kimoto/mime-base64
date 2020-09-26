@@ -1,6 +1,6 @@
 on 'runtime' => sub {
     requires 'strict';
-    requires 'vars';
+    requires 'warnings';
     requires 'Exporter';
     requires 'XSLoader';
 };
@@ -11,7 +11,9 @@ on 'configure' => sub {
 
 on 'test' => sub {
     requires 'strict';
+    requires 'warnings';
     requires 'Test';
+    requires 'Test::More';
 };
 
 on 'develop' => sub {

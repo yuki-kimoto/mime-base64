@@ -60,7 +60,7 @@
             "XSLoader" : "0",
             "perl" : "5.006",
             "strict" : "0",
-            "vars" : "0"
+            "warnings" : "0"
          }
       },
       "test" : {
@@ -73,7 +73,8 @@
             "Test" : "0",
             "Test::More" : "0",
             "perl" : "5.006",
-            "strict" : "0"
+            "strict" : "0",
+            "warnings" : "0"
          }
       }
    },
