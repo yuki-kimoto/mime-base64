@@ -81,11 +81,11 @@
    "provides" : {
       "MIME::Base64" : {
          "file" : "lib/MIME/Base64.pm",
-         "version" : "3.16"
+         "version" : "3.17"
       },
       "MIME::QuotedPrint" : {
          "file" : "lib/MIME/QuotedPrint.pm",
-         "version" : "3.16"
+         "version" : "3.17"
       }
    },
    "release_status" : "stable",
@@ -100,7 +100,7 @@
          "web" : "https://github.com/Dual-Life/mime-base64"
       }
    },
-   "version" : "3.16",
+   "version" : "3.17",
    "x_contributors" : [
       "Alexandr Ciornii <CHORNY@cpan.org>",
       "Chase Whitener <capoeirab@cpan.org>",
