@@ -1,6 +1,8 @@
 Change history for MIME-Base64
 
 {{$NEXT}}
+
+3.16      2020-09-26
   - Convert the build to Dist::Zilla to ensure we're releasing well built
     packages
   - Ensure all tests are using strict and warnings (thanks, Nicolas R).
