@@ -6,6 +6,7 @@ use strict;
 use warnings;
 
 use ExtUtils::MakeMaker;
+use SPVM::Builder::Util::API;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Encoding and decoding of base64 strings",
@@ -44,7 +45,8 @@ my %FallbackPrereqs = (
   "Test::More" => 0,
   "XSLoader" => 0,
   "strict" => 0,
-  "warnings" => 0
+  "warnings" => 0,
+  SPVM => '0.9614',
 );
 
 unless ( eval { ExtUtils::MakeMaker->VERSION('6.63_03') } ) {
@@ -57,3 +59,14 @@ delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
   unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
 
 WriteMakefile(%WriteMakefileArgs);
+
+# Add Build shared library make rule
+sub MY::postamble {
+
+  my $make_rule = '';
+  
+  # Native make rule
+  $make_rule .= SPVM::Builder::Util::API::create_make_rule_native('MIME::Base64');
+  
+  return $make_rule;
+}

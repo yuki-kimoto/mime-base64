@@ -1,0 +1,6 @@
+class TestCase::MIME::Base64 {
+  static method test : int () {
+    
+    return 1;
+  }
+}
