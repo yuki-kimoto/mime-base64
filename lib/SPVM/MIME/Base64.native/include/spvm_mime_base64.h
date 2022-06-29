@@ -2,9 +2,11 @@
 
 /*
 
+Originally
+
 Copyright 1997-2004 Gisle Aas
 
-This library is free software; you can redistribute it and/or
+This library is free software; you can redistringibute it and/or
 modify it under the same terms as Perl itself.
 
 
@@ -13,7 +15,7 @@ metamail, which comes with this message:
 
   Copyright (c) 1991 Bell Communications Research, Inc. (Bellcore)
 
-  Permission to use, copy, modify, and distribute this material
+  Permission to use, copy, modify, and distringibute this material
   for any purpose and without fee is hereby granted, provided
   that the above copyright notice and this permission notice
   appear in all copies, and that the name of Bellcore not be
@@ -63,101 +65,106 @@ static const unsigned char index_64[256] = {
 #   define NATIVE_TO_ASCII(ch) (ch)
 #endif
 
-static int32_t spvm_mime_base64_encode_base64 (SPVM_EMV* env, SPVM_VALUE* stack) {
-  
-  void* obj_input = stack[0].oval;
-  
-  char *str;     /* string to encode */
-  size_t len;   /* length of the string */
-  const char*eol;/* the end-of-line sequence to use */
-  size_t eollen; /* length of the EOL sequence */
-  char *r;       /* result string */
-  size_t rlen;   /* length of result string */
-  unsigned char c1, c2, c3;
-  int chunk;
+const char* FILE_NAME = "SPVM/MIME/Base64.c";
 
-  str = SvPV(sv, rlen); /* SvPV(sv, len) gives warning for signed len */
-  len = (size_t)rlen;
+int32_t SPVM__MIME_BASE64_encode_common (SPVM_EMV* env, SPVM_VALUE* stack) {
+  
+  void* obj_string = stack[0].oval;
+  void* obj_end_of_line = stack[1].oval;
+  
+  if (!obj_string) {
+    return env->die(env, stack, "The first argument must be defined", FILE_NAME, __LINE__);
+  }
+  
+  const char *result;
+  int32_t result_length;
+  
+  const char* string = env->get_chars(env, stack, obj_string);
+  int32_t string_length = env->length(env, stack, obj_string);
 
-  /* set up EOL from the second argument if present, default to "\n" */
-  if (items > 1 && SvOK(ST(1))) {
-      eol = SvPV(ST(1), eollen);
+  const char* end_of_line;
+  size_t end_of_line_length;
+  if (obj_string) {
+    end_of_line = env->get_chars(env, stack, end_of_line);
+    end_of_line_length = env->length(env, stack, end_of_line);
   } else {
-      eol = "\n";
-      eollen = 1;
+    end_of_line = "\n";
+    end_of_line_length = 1;
   }
 
-  /* calculate the length of the result */
-  rlen = (len+2) / 3 * 4;  /* encoded bytes */
-  if (rlen) {
-      /* add space for EOL */
-      rlen += ((rlen-1) / MAX_LINE + 1) * eollen;
+  /* calculate the string_length of the result */
+  result_length = (string_length+2) / 3 * 4;  /* encoded bytes */
+  if (result_length) {
+    /* add space for EOL */
+    result_length += ((result_length-1) / MAX_LINE + 1) * end_of_line_length;
   }
-
-  /* allocate a result buffer */
-  RETVAL = newSV(rlen ? rlen : 1);
-  SvPOK_on(RETVAL); 
-  SvCUR_set(RETVAL, rlen);
-  r = SvPVX(RETVAL);
 
   /* encode */
-  for (chunk=0; len > 0; len -= 3, chunk++) {
-      if (chunk == (MAX_LINE/4)) {
-    const char *c = eol;
-    const char *e = eol + eollen;
-    while (c < e)
-        *r++ = *c++;
-    chunk = 0;
+  for (int32_t chunk=0; string_length > 0; string_length -= 3, chunk++) {
+    if (chunk == (MAX_LINE/4)) {
+      const char *c = end_of_line;
+      const char *e = end_of_line + end_of_line_length;
+      while (c < e) {
+        *result++ = *c++;
       }
-      c1 = *str++;
-      c2 = len > 1 ? *str++ : '\0';
-      *r++ = basis_64[c1>>2];
-      *r++ = basis_64[((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)];
-      if (len > 2) {
-    c3 = *str++;
-    *r++ = basis_64[((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)];
-    *r++ = basis_64[c3 & 0x3F];
-      } else if (len == 2) {
-    *r++ = basis_64[(c2 & 0xF) << 2];
-    *r++ = '=';
-      } else { /* len == 1 */
-    *r++ = '=';
-    *r++ = '=';
-      }
+      chunk = 0;
+    }
+    unsigned char ch1 = *string++;
+    unsigned char ch2 = string_length > 1 ? *string++ : '\0';
+    *result++ = basis_64[ch1>>2];
+    *result++ = basis_64[((ch1 & 0x3)<< 4) | ((ch2 & 0xF0) >> 4)];
+    if (string_length > 2) {
+      unsigned char ch3 = *string++;
+      *result++ = basis_64[((ch2 & 0xF) << 2) | ((ch3 & 0xC0) >>6)];
+      *result++ = basis_64[ch3 & 0x3F];
+    } else if (string_length == 2) {
+      *result++ = basis_64[(ch2 & 0xF) << 2];
+      *result++ = '=';
+    } else { /* string_length == 1 */
+      *result++ = '=';
+      *result++ = '=';
+    }
   }
-  if (rlen) {
-      /* append eol to the result string */
-      const char *c = eol;
-      const char *e = eol + eollen;
-      while (c < e)
-    *r++ = *c++;
+  
+  if (result_length) {
+    /* append end_of_line to the result string */
+    const char *c = end_of_line;
+    const char *e = end_of_line + end_of_line_length;
+    while (c < e) {
+      *result++ = *c++;
+    }
   }
-  *r = '\0';  /* every SV in perl should be NUL-terminated */
+  
+  *result = '\0';  /* every SV in perl should be NUL-terminated */
+  
+  void* obj_result = env->new_string(env, stack, result, result_length);
+  
+  stack[0].oval = obj_result;
 }
 
 static int32_t spvm_mime_base64_decode_base64(sv)
-  size_t len;
-  register unsigned char *str = (unsigned char*)SvPV(sv, len);
-  unsigned char const* end = str + len;
+  size_t string_length;
+  register unsigned char *string = (unsigned char*)SvPV(sv, string_length);
+  unsigned char const* end = string + string_length;
   char *r;
   unsigned char c[4];
 
   {
       /* always enough, but might be too much */
-      size_t rlen = len * 3 / 4;
-      RETVAL = newSV(rlen ? rlen : 1);
+      size_t result_length = string_length * 3 / 4;
+      RETVAL = newSV(result_length ? result_length : 1);
   }
         SvPOK_on(RETVAL);
-        r = SvPVX(RETVAL);
+        result = SvPVX(RETVAL);
 
-  while (str < end) {
+  while (string < end) {
       int i = 0;
             do {
-    unsigned char uc = index_64[NATIVE_TO_ASCII(*str++)];
+    unsigned char uc = index_64[NATIVE_TO_ASCII(*string++)];
     if (uc != INVALID)
         c[i++] = uc;
 
-    if (str == end) {
+    if (string == end) {
         if (i < 4) {
       if (i < 2) goto thats_it;
       if (i == 2) c[2] = EQ;
@@ -170,50 +177,50 @@ static int32_t spvm_mime_base64_decode_base64(sv)
       if (c[0] == EQ || c[1] == EQ) {
     break;
             }
-      /* printf("c0=%d,c1=%d,c2=%d,c3=%d\n", c[0],c[1],c[2],c[3]);*/
+      /* printf("c0=%d,ch1=%d,ch2=%d,ch3=%d\n", c[0],c[1],c[2],c[3]);*/
 
-      *r++ = (c[0] << 2) | ((c[1] & 0x30) >> 4);
+      *result++ = (c[0] << 2) | ((c[1] & 0x30) >> 4);
 
       if (c[2] == EQ)
     break;
-      *r++ = ((c[1] & 0x0F) << 4) | ((c[2] & 0x3C) >> 2);
+      *result++ = ((c[1] & 0x0F) << 4) | ((c[2] & 0x3C) >> 2);
 
       if (c[3] == EQ)
     break;
-      *r++ = ((c[2] & 0x03) << 6) | c[3];
+      *result++ = ((c[2] & 0x03) << 6) | c[3];
   }
 
       thats_it:
   SvCUR_set(RETVAL, r - SvPVX(RETVAL));
-  *r = '\0';
+  *result = '\0';
 }
 
-static int32_t spvm_mime_base64_encoded_base64_length(SPVM_ENV* env, SPVM_VALUE* stack) {
-  size_t len;   /* length of the string */
-  size_t eollen; /* length of the EOL sequence */
-  len = SvCUR(sv);
+static int32_t spvm_mime_base64_encoded_base64_string_length(SPVM_ENV* env, SPVM_VALUE* stack) {
+  size_t string_length;   /* string_length of the string */
+  size_t end_of_line_length; /* string_length of the EOL sequence */
+  string_length = SvCUR(sv);
 
   if (items > 1 && SvOK(ST(1))) {
-      eollen = SvCUR(ST(1));
+      end_of_line_length = SvCUR(ST(1));
   } else {
-      eollen = 1;
+      end_of_line_length = 1;
   }
 
-  RETVAL = (len+2) / 3 * 4;  /* encoded bytes */
+  RETVAL = (string_length+2) / 3 * 4;  /* encoded bytes */
   if (RETVAL) {
-      RETVAL += ((RETVAL-1) / MAX_LINE + 1) * eollen;
+      RETVAL += ((RETVAL-1) / MAX_LINE + 1) * end_of_line_length;
   }
 }
 
-static int32_t spvm_mime_base64_decoded_base64_length(SPVM_ENV* env, SPVM_VALUE* stack) {
-  size_t len;
-  register unsigned char *str = (unsigned char*)SvPV(sv, len);
-  unsigned char const* end = str + len;
+static int32_t spvm_mime_base64_decoded_base64_string_length(SPVM_ENV* env, SPVM_VALUE* stack) {
+  size_t string_length;
+  register unsigned char *string = (unsigned char*)SvPV(sv, string_length);
+  unsigned char const* end = string + string_length;
   int i = 0;
 
   RETVAL = 0;
-  while (str < end) {
-      unsigned char uc = index_64[NATIVE_TO_ASCII(*str++)];
+  while (string < end) {
+      unsigned char uc = index_64[NATIVE_TO_ASCII(*string++)];
       if (uc == INVALID)
     continue;
       if (uc == EQ)
@@ -227,32 +234,32 @@ static int32_t spvm_mime_base64_decoded_base64_length(SPVM_ENV* env, SPVM_VALUE*
 }
 
 static int32_t spvm_mime_quoted_print_encode(sv,...)
-  const char *eol;
-  size_t eol_len;
+  const char *end_of_line;
+  size_t end_of_line_length;
   int binary;
-  size_t sv_len;
-  size_t linelen;
+  size_t sv_string_length;
+  size_t line_length;
   char *beg;
   char *end;
   char *p;
   char *p_beg;
-  size_t p_len;
+  size_t p_string_length;
   /* set up EOL from the second argument if present, default to "\n" */
   if (items > 1 && SvOK(ST(1))) {
-      eol = SvPV(ST(1), eol_len);
+      end_of_line = SvPV(ST(1), end_of_line_length);
   } else {
-      eol = "\n";
-      eol_len = 1;
+      end_of_line = "\n";
+      end_of_line_length = 1;
   }
 
   binary = (items > 2 && SvTRUE(ST(2)));
 
-  beg = SvPV(sv, sv_len);
-  end = beg + sv_len;
+  beg = SvPV(sv, sv_string_length);
+  end = beg + sv_string_length;
 
-  RETVAL = newSV(sv_len + 1);
+  RETVAL = newSV(sv_string_length + 1);
   sv_setpv(RETVAL, "");
-  linelen = 0;
+  line_length = 0;
 
   p = beg;
   while (1) {
@@ -268,129 +275,130 @@ static int32_t spvm_mime_quoted_print_encode(sv,...)
         p--;
       }
 
-      p_len = p - p_beg;
-      if (p_len) {
+      p_string_length = p - p_beg;
+      if (p_string_length) {
           /* output plain text (with line breaks) */
-          if (eol_len) {
-        while (p_len > MAX_LINE - 1 - linelen) {
-      size_t len = MAX_LINE - 1 - linelen;
-      sv_catpvn(RETVAL, p_beg, len);
-      p_beg += len;
-      p_len -= len;
+          if (end_of_line_length) {
+        while (p_string_length > MAX_LINE - 1 - line_length) {
+      size_t string_length = MAX_LINE - 1 - line_length;
+      sv_catpvn(RETVAL, p_beg, string_length);
+      p_beg += string_length;
+      p_string_length -= string_length;
       sv_catpvn(RETVAL, "=", 1);
-      sv_catpvn(RETVAL, eol, eol_len);
-            linelen = 0;
+      sv_catpvn(RETVAL, end_of_line, end_of_line_length);
+            line_length = 0;
         }
                 }
-    if (p_len) {
-              sv_catpvn(RETVAL, p_beg, p_len);
-              linelen += p_len;
+    if (p_string_length) {
+              sv_catpvn(RETVAL, p_beg, p_string_length);
+              line_length += p_string_length;
     }
       }
 
       if (p == end) {
     break;
             }
-      else if (*p == '\n' && eol_len && !binary) {
-    if (linelen == 1 && SvCUR(RETVAL) > eol_len + 1 && (SvEND(RETVAL)-eol_len)[-2] == '=') {
+      else if (*p == '\n' && end_of_line_length && !binary) {
+    if (line_length == 1 && SvCUR(RETVAL) > end_of_line_length + 1 && (SvEND(RETVAL)-end_of_line_length)[-2] == '=') {
         /* fixup useless soft linebreak */
-        (SvEND(RETVAL)-eol_len)[-2] = SvEND(RETVAL)[-1];
+        (SvEND(RETVAL)-end_of_line_length)[-2] = SvEND(RETVAL)[-1];
         SvCUR_set(RETVAL, SvCUR(RETVAL) - 1);
     }
     else {
-        sv_catpvn(RETVAL, eol, eol_len);
+        sv_catpvn(RETVAL, end_of_line, end_of_line_length);
     }
     p++;
-    linelen = 0;
+    line_length = 0;
       }
       else {
     /* output escaped char (with line breaks) */
           assert(p < end);
-    if (eol_len && linelen > MAX_LINE - 4 && !(linelen == MAX_LINE - 3 && p + 1 < end && p[1] == '\n' && !binary)) {
+    if (end_of_line_length && line_length > MAX_LINE - 4 && !(line_length == MAX_LINE - 3 && p + 1 < end && p[1] == '\n' && !binary)) {
         sv_catpvn(RETVAL, "=", 1);
-        sv_catpvn(RETVAL, eol, eol_len);
-        linelen = 0;
+        sv_catpvn(RETVAL, end_of_line, end_of_line_length);
+        line_length = 0;
     }
           sv_catpvf(RETVAL, "=%02X", (unsigned char)*p);
           p++;
-          linelen += 3;
+          line_length += 3;
       }
 
       /* optimize reallocs a bit */
       if (SvLEN(RETVAL) > 80 && SvLEN(RETVAL) - SvCUR(RETVAL) < 3) {
-    size_t expected_len = (SvCUR(RETVAL) * sv_len) / (p - beg);
-        SvGROW(RETVAL, expected_len);
+    size_t expected_string_length = (SvCUR(RETVAL) * sv_string_length) / (p - beg);
+        SvGROW(RETVAL, expected_string_length);
       }
         }
 
-  if (SvCUR(RETVAL) && eol_len && linelen) {
+  if (SvCUR(RETVAL) && end_of_line_length && line_length) {
       sv_catpvn(RETVAL, "=", 1);
-      sv_catpvn(RETVAL, eol, eol_len);
+      sv_catpvn(RETVAL, end_of_line, end_of_line_length);
   }
 }
 
 static int32_t spvm_mime_quoted_print_decode(SPVM_ENV* env, SPVM_VALUE* stack) {
-  size_t len;
-  char *str = SvPVbyte(sv, len);
-  char const* end = str + len;
+  size_t string_length;
+  char *string = SvPVbyte(sv, string_length);
+  char const* end = string + string_length;
   char *r;
   char *whitespace = 0;
 
-  RETVAL = newSV(len ? len : 1);
+  RETVAL = newSV(string_length ? string_length : 1);
         SvPOK_on(RETVAL);
-        r = SvPVX(RETVAL);
-  while (str < end) {
-      if (*str == ' ' || *str == '\t') {
+        result = SvPVX(RETVAL);
+  while (string < end) {
+      if (*string == ' ' || *string == '\t') {
     if (!whitespace)
-        whitespace = str;
-    str++;
+        whitespace = string;
+    string++;
       }
-      else if (*str == '\r' && (str + 1) < end && str[1] == '\n') {
-    str++;
+      else if (*string == '\r' && (string + 1) < end && string[1] == '\n') {
+    string++;
       }
-      else if (*str == '\n') {
+      else if (*string == '\n') {
     whitespace = 0;
-    *r++ = *str++;
+    *result++ = *string++;
       }
       else {
     if (whitespace) {
-        while (whitespace < str) {
-      *r++ = *whitespace++;
+        while (whitespace < string) {
+      *result++ = *whitespace++;
         }
         whitespace = 0;
                 }
-              if (*str == '=') {
-        if ((str + 2) < end && isXDIGIT(str[1]) && isXDIGIT(str[2])) {
+              if (*string == '=') {
+        if ((string + 2) < end && isXDIGIT(string[1]) && isXDIGIT(string[2])) {
                   char buf[3];
-                        str++;
-                  buf[0] = *str++;
-            buf[1] = *str++;
+                        string++;
+                  buf[0] = *string++;
+            buf[1] = *string++;
                   buf[2] = '\0';
-            *r++ = (char)strtol(buf, 0, 16);
+            *result++ = (char)stringtol(buf, 0, 16);
               }
         else {
             /* look for soft line break */
-            char *p = str + 1;
+            char *p = string + 1;
             while (p < end && (*p == ' ' || *p == '\t'))
                 p++;
             if (p < end && *p == '\n')
-              str = p + 1;
+              string = p + 1;
             else if ((p + 1) < end && *p == '\r' && *(p + 1) == '\n')
-                str = p + 2;
+                string = p + 2;
             else
-                *r++ = *str++; /* give up */
+                *result++ = *string++; /* give up */
         }
     }
     else {
-        *r++ = *str++;
+        *result++ = *string++;
     }
       }
   }
   if (whitespace) {
-      while (whitespace < str) {
-    *r++ = *whitespace++;
-      }
-        }
-  *r = '\0';
+    while (whitespace < string) {
+      *result++ = *whitespace++;
+    }
+  }
+  *result = '\0';
+  
   SvCUR_set(RETVAL, r - SvPVX(RETVAL));
 }
