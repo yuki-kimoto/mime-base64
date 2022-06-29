@@ -133,9 +133,6 @@ static int32_t spvm_mime_base64_encode_base64 (SPVM_EMV* env, SPVM_VALUE* stack)
     *r++ = *c++;
   }
   *r = '\0';  /* every SV in perl should be NUL-terminated */
-
-  OUTPUT:
-  RETVAL
 }
 
 static int32_t spvm_mime_base64_decode_base64(sv)
